@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>משחק כימיה מתקדם - בסיסים</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: transparent;
+            font-family: Arial, sans-serif;
+        }
+        #game {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: none;
+        }
+        .drop {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            background: radial-gradient(ellipse at center, #3498db 0%, #2980b9 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        #player {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 140px;
+            background-image: url('https://i.imgur.com/A3NXS7F.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+#liquid {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 65px;
+    background-color: rgba(255, 255, 0, 0.7);
+    transition: height 0.3s;
+    border-radius: 0 0 20px 20px;
+}
+        #player, #liquid {
+            width: 120px;
+            height: 120px;
+        }
+        #score, #timer, #level, #lives {
+            position: absolute;
+            font-size: 18px;
+        }
+        #score { top: 10px; right: 10px; }
+        #timer { top: 10px; left: 10px; }
+        #level { top: 40px; right: 10px; }
+        #lives { top: 40px; left: 10px; }
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        #infoPanel {
+            position: absolute;
+            right: 10px;
+            top: 100px;
+            width: 200px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .drop {
+                width: 60px;
+                height: 90px;
+                font-size: 14px;
+            }
+            #player, #liquid {
+                width: 100px;
+                height: 100px;
+            }
+            #score, #timer, #level, #lives {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>משחק כימיה - בסיסים</h1>
+        <p>תפסו את הבסיסים ומלאו את הדלי!</p>
+        <button id="startEasy">קל</button>
+        <button id="startMedium">בינוני</button>
+        <button id="startHard">קשה</button>
+    </div>
+    <div id="gameOverScreen" style="display: none;">
+        <h1>המשחק נגמר!</h1>
+        <p id="finalScore"></p>
+        <button id="restartButton">שחק שוב</button>
+    </div>
+    <div id="game">
+        <div id="player"></div>
+        <div id="liquid"></div>
+        <div id="score">נוזל: 0/10</div>
+        <div id="timer">זמן: 60</div>
+        <div id="level">רמה: 1</div>
+        <div id="lives">חיים: ❤❤❤</div>
+        <div id="infoPanel"></div>
+        <div id="message"></div>
+    </div>
+
+<audio id="correctSound" src="data:audio/wav;base64,UklGRigBAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQBAADpAFgCuwH7/uT7+9D5Cvfo9PfyLvM09Dv2xfgX+3L9rv/0ATUEYgZ8BuUFRAKb/P/27vMS8xD0esbwvCa5arx3vgPLzdnf56/2PQCFA0cDPwAdAnYFPwT//nj8Z/xHAipMLCvGFMr63vFf/z0Nqh2GKOgmAxa8/mrtSd9U0/fLq8aRxJjHq8zA0wfcZOS77d/3sADJAGcEuAeSBCkAV/3v+vz2E/fl+24KxxLEGAUcJRkODmz8Gu26X58qix+BIyhX/W3Ld1KFkYvgiR2GinigW11EhzMmKOkfLRiiGFUciiAhJGAjdRymDsL/LvH16OziUtyB1bvPt8xTzLrOrtK61srabN9u5abrlfLx+Tb+GQLlBSQI7QXRAOf5OvZo9R/3avvtAPYFOwk2DPINda/i">
+</audio>
+document.getElementById('correctSound').play();
+    <audio id="wrongSound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZSA0PVK3n77BdGAg+ltryxnMpBSl+zPLaizsIGGS57OihUBELTKXh8bllHgU2jdXzzn0vBSF1xe/glEILElyx6OyrWBUIQ5zd8sFuJAUuhM/z1YU2Bhxqvu7mnEoODlGq5O+zYBoGPJPY88p2KwUme8rx3I4+CRZiturqpVITC0mi4PK8aB8GM4nU8tGAMQYfcsLu45ZFDBBYr+ftrVoXCECY3PLEcSYELIHO8diJOQcZaLvt559NEAxPqOPwtmMcBjiP1/PMeS0GI3fH8N2RQAoUXrTp66hVFApGnt/yvmwhBTCG0fPTgjQGHW/A7eSaRw0PVK3m77BeGQc9ltvyxnUoBSh+zPDaizsIGGS56+mjTxELTKXh8bllHgU1jdT0z3wvBSJ0xe/glEILElyx6OyrWRUIRJve8sFuJAUug8/z1oU2Bhxqvu3mnEoPDVKp5O+zYRsGPJLZ88p3KgUme8rx3I4+CRVht+rqpVMSC0mh4PK8aiAFM4nU8tGAMQYfccPu45ZFDBBYr+ftrVwWCECY3PLEcSYGK4DN8tiIOQcZZ7zs56BODwxPpuPxtmQcBjiP1/PMeywGI3fH8N+RQAoUXrTp66hWEwlGnt/yv2wiBDCG0fPTgzQHHG/A7eSaSQ0PVKzm77BeGQc9ltrzxnUoBSh9y/HajDsIF2W56+mjUREKTKPi8blnHgU1jdTy0HwvBSF0xPDglEQKElux6eyrWRUJQ5vd88FwJAQug8/z1oY2Bhxqvu3mnEwODFGp5O+zYRsGOpPX88p3KgUmecnw3Y4/CBVhtuvqpVMSC0mh4PK9aiAFM4nS89GAMQYfccLv45dGCw9Yr+ftrVwXCECY3PLEcicFKoDN8tiIOQcZZ7rs56BODwxPpuPxt2MdBTiP1/PMey4FI3bH8d+RQQkUXbPq66hWFQlGnt/yv2wiBDCG0PPTgzUGHG3A7uSaSQ0PVKzm77FfGAc9ltrzyHQpBSh9y/HajDwIF2S46+mjUREKTKPi8bpoHgU1jdTy0H4wBiF0xPDglEQKElux5+2sWBUJQ5vd88NvJAUtg87y1oY3Bhxqvu3mnEwODFGp5PC1YRsHOpHY88p3LAUlecnw3Y8+CBZhtuvqpVMSC0mh4
+    PK9aiAFMojT89GBMgUfccLv45dGCw9Xr+ftrV0WCT+Y3PLEcycFKn/O8tiKOQgZZ7vs56BOEAxOpePxt2UcBTmO1/PNfC4FI3bH79+RQQoTXbPq66hWFQlFlw=="></audio>
+
+    <script>
+        const game = document.getElementById('game');
+        const player = document.getElementById('player');
+        const liquid = document.getElementById('liquid');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const levelElement = document.getElementById('level');
+        const livesElement = document.getElementById('lives');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreElement = document.getElementById('finalScore');
+        const infoPanel = document.getElementById('infoPanel');
+        const message = document.getElementById('message');
+
+        let liquidLevel = 0;
+        let score = 0;
+        let level = 1;
+        let lives = 3;
+        let timeLeft = 60;
+        let gameInterval;
+        let timerInterval;
+        let dropSpeed = 2;
+        let dropInterval = 2000;
+
+        const compounds = [
+    { formula: 'HCl', isBase: false },
+    { formula: 'HBr', isBase: false },
+    { formula: 'HI', isBase: false },
+    { formula: 'H₂SO₄', isBase: false },
+    { formula: 'HNO₃', isBase: false },
+    { formula: 'CH₃COOH', isBase: false },
+    { formula: 'C₃H₇COOH', isBase: false },
+    { formula: 'CH₃OH', isBase: false },
+    { formula: 'C₂H₅OH', isBase: false },
+    { formula: 'C₃H₆O', isBase: false },
+    { formula: 'NaCl', isBase: false },
+    { formula: 'KBr', isBase: false },
+    { formula: 'LiI', isBase: false },
+    { formula: 'NaOH', isBase: true },
+    { formula: 'NH₃', isBase: true },
+    { formula: 'CH₃NH₂', isBase: true },
+    { formula: 'KOH', isBase: true },
+    { formula: 'Mg(OH)₂', isBase: true },
+    { formula: 'Al(OH)₃', isBase: true }
+];
+
+        function startGame(difficulty) {
+            startScreen.style.display = 'none';
+            game.style.display = 'block';
+            
+            switch(difficulty) {
+                case 'easy':
+                    dropSpeed = 1;
+                    dropInterval = 2000;
+                    break;
+                case 'medium':
+                    dropSpeed = 2;
+                    dropInterval = 1500;
+                    break;
+                case 'hard':
+                    dropSpeed = 3;
+                    dropInterval = 1000;
+                    break;
+            }
+
+            resetGame();
+            gameInterval = setInterval(createDrop, dropInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function createDrop() {
+            const drop = document.createElement('div');
+            drop.className = 'drop';
+            const compound = compounds[Math.floor(Math.random() * compounds.length)];
+            drop.innerHTML = compound.formula;
+            drop.dataset.isBase = compound.isBase;
+            drop.style.left = `${Math.random() * (game.clientWidth - 80)}px`;
+            drop.style.top = '0px';
+            game.appendChild(drop);
+
+            let fall = setInterval(() => {
+                const top = parseInt(drop.style.top);
+                if (top >= game.clientHeight - 120) {
+                    clearInterval(fall);
+                    game.removeChild(drop);
+                } else {
+                    drop.style.top = `${top + dropSpeed}px`;
+                    checkCollision(drop);
+                }
+            }, 20);
+        }
+
+function checkCollision(drop) {
+    const dropRect = drop.getBoundingClientRect();
+    const playerRect = player.getBoundingClientRect();
+
+    if (
+        dropRect.left < playerRect.right &&
+        dropRect.right > playerRect.left &&
+        dropRect.bottom > playerRect.top
+    ) {
+        game.removeChild(drop);
+        updateLiquidLevel(drop.dataset.isBase === 'true');
+        showInfo(drop.innerHTML, drop.dataset.isBase === 'true');
+    }
+}
+
+function updateLiquidLevel(isBase) {
+    if (isBase) {
+        liquidLevel = Math.min(liquidLevel + 1, 10);
+        score += 10;
+        document.getElementById('correctSound').play();
+    } else {
+        lives--;
+        updateLives();
+        document.getElementById('wrongSound').play();
+    }
+    liquid.style.height = `${liquidLevel * 12}px`;
+    scoreElement.textContent = `נוזל: ${liquidLevel}/10 | ניקוד: ${score}`;
+
+    if (liquidLevel === 10) {
+        showMessage("כל הכבוד! המשך למלא");
+        levelUp();
+    }
+
+    if (lives === 0) {
+        endGame();
+    }
+}
+
+        function updateLives() {
+            livesElement.textContent = `חיים: ${'❤'.repeat(lives)}`;
+        }
+
+        function levelUp() {
+            level++;
+            levelElement.textContent = `רמה: ${level}`;
+            liquidLevel = 0;
+            liquid.style.height = '0px';
+            dropSpeed += 0.5;
+            dropInterval = Math.max(dropInterval - 100, 500);
+            clearInterval(gameInterval);
+            gameInterval = setInterval(createDrop, dropInterval);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerElement.textContent = `זמן: ${timeLeft}`;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            game.style.display = 'none';
+            gameOverScreen.style.display = 'flex';
+            finalScoreElement.textContent = `הניקוד הסופי שלך: ${score}`;
+        }
+
+function resetGame() {
+    liquidLevel = 0;
+    score = 0;
+    level = 1;
+    lives = 3;
+    timeLeft = 60;
+    liquid.style.height = '0px';
+    scoreElement.textContent = `נוזל: 0/10 | ניקוד: 0`;
+    timerElement.textContent = `זמן: 60`;
+    levelElement.textContent = `רמה: 1`;
+    updateLives();
+}
+function showInfo(formula, isBase) {
+    infoPanel.style.display = 'block';
+    infoPanel.textContent = `${formula} הוא ${isBase ? 'בסיס' : 'לא בסיס'}`;
+    setTimeout(() => {
+        infoPanel.style.display = 'none';
+    }, 2000);
+}
+
+        function showMessage(text) {
+            message.textContent = text;
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 2000);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const left = parseInt(window.getComputedStyle(player).left);
+            if (e.key === 'ArrowLeft' && left > 0) {
+                player.style.left = `${left - 10}px`;
+                liquid.style.left = `${left - 10 + 2}px`;
+            } else if (e.key === 'ArrowRight' && left < game.clientWidth - 80) {
+                player.style.left = `${left + 10}px`;
+                liquid.style.left = `${left + 10 + 2}px`;
+            }
+        });
+
+        let touchStartX = 0;
+        let playerCurrentX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            playerCurrentX = parseInt(window.getComputedStyle(player).left);
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touchEndX = e.touches[0].clientX;
+            const diff = touchEndX - touchStartX;
+            
+            let newX = playerCurrentX + diff;
+            newX = Math.max(0, Math.min(newX, game.clientWidth - 80));
+            
+            player.style.left = `${newX}px`;
+            liquid.style.left = `${newX + 2}px`;
+        });
+
+        document.getElementById('startEasy').addEventListener('click', () => startGame('easy'));
+        document.getElementById('startMedium').addEventListener('click', () => startGame('medium'));
+        document.getElementById('startHard').addEventListener('click', () => startGame('hard'));
+        document.getElementById('restartButton').addEventListener('click', () => {
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+        });
+    </script>
+</body>
+</html>
+
+
